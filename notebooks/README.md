@@ -6,6 +6,8 @@
 
 `LG_CXR_FRCNN_Kaggle.ipynb` is the Kaggle Notebook workflow. It clones the GitHub repo into `/kaggle/working/Amia_keagle_challenge`, uses `/kaggle/input/amia-public-challenge-2026`, and writes `submission.csv` to `/kaggle/working`.
 
+`LG_CXR_FRCNN_Kaggle_V2_Three_Model.ipynb` is the complete Kaggle V2 workflow with three models: Faster R-CNN scanner, global ResNet18 classifier, and crop ResNet18 verifier. It uses `configs/v2_three_model.yaml`.
+
 Both notebooks include a dimension-audit step:
 
 ```bash

@@ -23,7 +23,8 @@ Every agent working on this repository must:
 17. Do not over-engineer before a valid submission exists.
 18. Make every script runnable from the command line and from Colab.
 19. Keep config centralized in YAML.
-20. Run `python scripts/06_ci_checks.py` before pushing.
+20. Keep the V2 Kaggle notebook synchronized with V2 scripts/config.
+21. Run `python scripts/06_ci_checks.py` before pushing.
 
 Operational notes:
 

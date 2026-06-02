@@ -28,6 +28,20 @@ Planned optional extensions are:
 
 Optional classifier checkpoints may be absent. The code must continue with Faster R-CNN only.
 
+V2 is a three-model cascade:
+
+```text
+Faster R-CNN scanner -> global ResNet18 score -> crop ResNet18 score -> fused predictions -> submission.csv
+```
+
+The three V2 models are used in this order:
+
+1. Faster R-CNN ResNet50-FPN: finds candidate boxes, classes, and scanner confidence scores.
+2. Global ResNet18 classifier: looks at the whole image and estimates which classes are likely anywhere in the X-ray.
+3. Crop ResNet18 classifier: looks at each Faster R-CNN candidate crop and verifies whether that crop supports the predicted class.
+
+Fusion combines the available scores. If a V2 classifier checkpoint is missing, the code can still proceed with the scanner score.
+
 ## Theory
 
 Object detection predicts both what is present and where it appears. Classification predicts what is present in the whole image, but not the box location. Chest X-ray pathology tasks often need detection because the leaderboard expects class IDs, confidence scores, and bounding boxes.
@@ -182,6 +196,12 @@ Use this notebook inside Kaggle:
 notebooks/LG_CXR_FRCNN_Kaggle.ipynb
 ```
 
+For the complete three-model V2 cascade, use:
+
+```text
+notebooks/LG_CXR_FRCNN_Kaggle_V2_Three_Model.ipynb
+```
+
 In Kaggle:
 
 1. Create or open a Kaggle Notebook.
@@ -213,6 +233,39 @@ The final submission is:
 
 ```text
 /kaggle/working/submission.csv
+```
+
+V2 uses:
+
+```text
+configs/v2_three_model.yaml
+```
+
+and writes intermediate V2 outputs:
+
+```text
+/kaggle/working/lgcxr_global_test_scores.csv
+/kaggle/working/lgcxr_crop_test_scores.csv
+/kaggle/working/lgcxr_fused_test_predictions.csv
+```
+
+Recommended V2 order with limited GPU:
+
+```text
+CPU:
+- CI checks
+- preflight
+- dimension audit
+
+GPU:
+- train Faster R-CNN scanner
+- predict scanner
+- train global ResNet18
+- predict global scores
+- train crop ResNet18
+- predict crop scores
+- fuse scores
+- make submission
 ```
 
 ## Step-by-Step Usage
@@ -257,6 +310,12 @@ Single-command pipeline:
 
 ```bash
 python scripts/04_full_pipeline.py --config configs/baseline_frcnn.yaml
+```
+
+V2 three-model pipeline:
+
+```bash
+python scripts/09_full_pipeline_v2.py --config configs/v2_three_model.yaml
 ```
 
 Smoke test:
@@ -504,8 +563,9 @@ Every agent working on this repository must:
 15. Keep config centralized in YAML.
 16. Keep `notebooks/LG_CXR_FRCNN_Colab.ipynb` synchronized with script commands.
 17. Keep `notebooks/LG_CXR_FRCNN_Colab_Standalone.ipynb` synchronized when project files or script commands change.
-18. If a script command changes, update README, `AGENT_INSTRUCTIONS.md`, both Colab notebooks, and `scripts/06_ci_checks.py` if needed.
-19. Run `python scripts/06_ci_checks.py` before pushing.
+18. Keep `notebooks/LG_CXR_FRCNN_Kaggle_V2_Three_Model.ipynb` synchronized with V2 scripts.
+19. If a script command changes, update README, `AGENT_INSTRUCTIONS.md`, relevant notebooks, and `scripts/06_ci_checks.py` if needed.
+20. Run `python scripts/06_ci_checks.py` before pushing.
 
 ## Changelog
 
@@ -516,3 +576,4 @@ Every agent working on this repository must:
 - 2026-06-02: Fixed original-coordinate bounding-box handling: train boxes are scaled from original scan space into PNG space for Faster R-CNN, and inference boxes are scaled back to original space for submission.
 - 2026-06-02: Added lightweight pre-push/GitHub Actions checks via `scripts/06_ci_checks.py`, `.githooks/pre-push`, and `.github/workflows/ci.yml`.
 - 2026-06-02: Added `notebooks/LG_CXR_FRCNN_Kaggle.ipynb` for running the full workflow inside Kaggle.
+- 2026-06-02: Added complete V2 three-model cascade config, scripts, and `notebooks/LG_CXR_FRCNN_Kaggle_V2_Three_Model.ipynb`.

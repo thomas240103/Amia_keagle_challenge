@@ -23,6 +23,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", required=True, help="Path to YAML config.")
     parser.add_argument("--data-root", default=None, help="Override dataset root.")
     parser.add_argument("--work-dir", default=None, help="Override output directory.")
+    parser.add_argument("--prediction-csv", default=None, help="Override prediction CSV. Defaults to lgcxr_fast_test_predictions.csv.")
     return parser.parse_args()
 
 
@@ -37,7 +38,7 @@ def main() -> int:
         raise RuntimeError("Could not identify sample submission CSV.")
 
     sample_df = load_csv(discovery.sample_submission)
-    prediction_path = output_path(config, "lgcxr_fast_test_predictions.csv")
+    prediction_path = Path(args.prediction_csv) if args.prediction_csv else output_path(config, "lgcxr_fast_test_predictions.csv")
     if not prediction_path.exists():
         raise FileNotFoundError(f"Test prediction CSV not found: {prediction_path}")
     predictions = pd.read_csv(prediction_path)

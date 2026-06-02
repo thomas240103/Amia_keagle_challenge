@@ -1,0 +1,74 @@
+data_root: /kaggle/input/amia-public-challenge-2026
+work_dir: /kaggle/working
+seed: 42
+
+smoke_test: false
+smoke_max_train_images: 500
+smoke_max_val_images: 100
+smoke_max_test_images: 100
+
+val_size: 0.2
+
+scanner:
+  model: fasterrcnn_resnet50_fpn
+  image_size: 800
+  max_size: 1200
+  epochs: 8
+  batch_size: 2
+  lr: 0.0002
+  weight_decay: 0.0001
+  num_workers: 2
+  amp: true
+  grad_clip: 5.0
+  best_ckpt: /kaggle/working/lgcxr_scanner_fasterrcnn_best.pth
+  last_ckpt: /kaggle/working/lgcxr_scanner_fasterrcnn_last.pth
+  resume: true
+
+inference:
+  conf_threshold: 0.03
+  nms_iou: 0.50
+  max_det_per_image: 100
+
+evaluation:
+  voc_iou_threshold: 0.4
+
+global_classifier:
+  enabled: true
+  model: resnet18
+  checkpoint: /kaggle/working/lgcxr_global_classifier_best.pth
+  image_size: 512
+  epochs: 3
+  batch_size: 16
+  lr: 0.0003
+  weight_decay: 0.0001
+  num_workers: 2
+  amp: true
+  resume: true
+
+crop_classifier:
+  enabled: true
+  model: resnet18
+  checkpoint: /kaggle/working/lgcxr_crop_classifier_best.pth
+  image_size: 384
+  crop_margin: 0.4
+  max_crops_per_image: 30
+  epochs: 3
+  batch_size: 32
+  lr: 0.0003
+  weight_decay: 0.0001
+  num_workers: 2
+  amp: true
+  resume: true
+
+fusion:
+  scanner_weight: 0.70
+  global_weight: 0.15
+  crop_weight: 0.15
+  default_threshold: 0.03
+  per_class_thresholds: {}
+  output_path: /kaggle/working/lgcxr_fused_test_predictions.csv
+
+submission:
+  no_finding_class_id: 14
+  no_finding_string: "14 1.0 0 0 1 1"
+  output_path: /kaggle/working/submission.csv

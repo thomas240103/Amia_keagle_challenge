@@ -65,6 +65,10 @@ def normalize_work_dir_paths(config: dict[str, Any]) -> dict[str, Any]:
         work_dir / Path(crop_classifier.get("checkpoint", "lgcxr_crop_classifier_best.pth")).name
     )
 
+    fusion = cfg.setdefault("fusion", {})
+    if "output_path" in fusion:
+        fusion["output_path"] = str(work_dir / Path(fusion.get("output_path", "lgcxr_fused_test_predictions.csv")).name)
+
     submission = cfg.setdefault("submission", {})
     submission["output_path"] = str(work_dir / Path(submission.get("output_path", "submission.csv")).name)
     return cfg
