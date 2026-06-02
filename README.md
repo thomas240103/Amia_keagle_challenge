@@ -42,6 +42,8 @@ The three V2 models are used in this order:
 
 Fusion combines the available scores. If a V2 classifier checkpoint is missing, the code can still proceed with the scanner score.
 
+Practical rule: do not spend GPU on V2 classifiers until the scanner is learning. In the V2 notebook, train the Faster R-CNN scanner first, inspect `best_score` / `val_map_proxy`, then continue with global and crop classifiers only if the scanner mAP proxy is not near zero.
+
 ## Theory
 
 Object detection predicts both what is present and where it appears. Classification predicts what is present in the whole image, but not the box location. Chest X-ray pathology tasks often need detection because the leaderboard expects class IDs, confidence scores, and bounding boxes.
@@ -268,6 +270,19 @@ GPU:
 - make submission
 ```
 
+The Kaggle notebooks set:
+
+```python
+os.environ["LGCXR_ALLOW_WEIGHT_DOWNLOAD"] = "1"
+```
+
+This lets torchvision download pretrained Faster R-CNN weights when Kaggle internet is enabled. If download fails, the model builder now falls back cleanly to random initialization with a warning instead of crashing. If you accidentally trained from random initialization and want a pretrained run, remove old scanner checkpoints before restarting:
+
+```bash
+rm -f /kaggle/working/lgcxr_scanner_fasterrcnn_best.pth
+rm -f /kaggle/working/lgcxr_scanner_fasterrcnn_last.pth
+```
+
 ## Step-by-Step Usage
 
 Run preflight first:
@@ -426,6 +441,21 @@ Batch size is intentionally small by default because Faster R-CNN is memory-heav
 
 Do not change `scanner.image_size` blindly. Run the dimension audit first, then choose the next experiment based on resized box-size statistics.
 
+Training metrics are saved to:
+
+```text
+WORK_DIR/lgcxr_scanner_training_summary.json
+```
+
+Important fields:
+
+- `best_score`: best validation VOC-style mAP proxy at IoU `0.4`.
+- `history[*].train_loss`: epoch training loss.
+- `history[*].val_map_proxy`: validation proxy per epoch.
+- `history[*].metrics.per_class_ap`: per-class AP estimates.
+
+Use these before moving from V1 scanner to V2. If `val_map_proxy` stays near zero after several epochs, fix scanner training first.
+
 ## Inference
 
 Inference loads the best scanner checkpoint, predicts validation and test images, applies confidence thresholding, applies class-wise NMS, maps internal labels back to original class IDs, and saves:
@@ -577,3 +607,4 @@ Every agent working on this repository must:
 - 2026-06-02: Added lightweight pre-push/GitHub Actions checks via `scripts/06_ci_checks.py`, `.githooks/pre-push`, and `.github/workflows/ci.yml`.
 - 2026-06-02: Added `notebooks/LG_CXR_FRCNN_Kaggle.ipynb` for running the full workflow inside Kaggle.
 - 2026-06-02: Added complete V2 three-model cascade config, scripts, and `notebooks/LG_CXR_FRCNN_Kaggle_V2_Three_Model.ipynb`.
+- 2026-06-02: Updated Kaggle notebooks to request torchvision pretrained detector weights and added scanner metric inspection cells before V2 continuation.

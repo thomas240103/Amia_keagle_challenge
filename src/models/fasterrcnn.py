@@ -38,13 +38,24 @@ def build_fasterrcnn(num_classes: int, image_size: int = 800, max_size: int | No
 
     try:
         model = builder(**kwargs)
-    except TypeError:
-        model = builder(
-            pretrained=weights is not None,
-            pretrained_backbone=False,
-            min_size=int(image_size),
-            max_size=int(max_size),
-        )
+    except Exception as exc:
+        if isinstance(exc, TypeError):
+            model = builder(
+                pretrained=weights is not None,
+                pretrained_backbone=False,
+                min_size=int(image_size),
+                max_size=int(max_size),
+            )
+        elif weights is not None:
+            warnings.warn(
+                "Could not load/download torchvision pretrained detector weights. "
+                f"Falling back to randomly initialized Faster R-CNN. Original error: {exc}",
+                RuntimeWarning,
+            )
+            kwargs["weights"] = None
+            model = builder(**kwargs)
+        else:
+            raise
 
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
