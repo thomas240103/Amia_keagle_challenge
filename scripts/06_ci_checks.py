@@ -30,6 +30,7 @@ REQUIRED_FILES = [
     "scripts/05_audit_dimensions.py",
     "notebooks/LG_CXR_FRCNN_Colab.ipynb",
     "notebooks/LG_CXR_FRCNN_Colab_Standalone.ipynb",
+    "notebooks/LG_CXR_FRCNN_Kaggle.ipynb",
     "src/data/image_sizes.py",
 ]
 

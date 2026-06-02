@@ -4,6 +4,8 @@
 
 `LG_CXR_FRCNN_Colab_Standalone.ipynb` is the copy/paste workflow for Colab when the user does not have the project folder yet. It bootstraps the project files into `/content/amia-lgcxr-frcnn`.
 
+`LG_CXR_FRCNN_Kaggle.ipynb` is the Kaggle Notebook workflow. It clones the GitHub repo into `/kaggle/working/Amia_keagle_challenge`, uses `/kaggle/input/amia-public-challenge-2026`, and writes `submission.csv` to `/kaggle/working`.
+
 Both notebooks include a dimension-audit step:
 
 ```bash

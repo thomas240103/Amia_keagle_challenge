@@ -174,6 +174,47 @@ Place the dataset at:
 
 or adjust `DATA_ROOT` in the notebook. All important Colab outputs are saved to `WORK_DIR`, including checkpoints, predictions, debug images, training summaries, and `submission.csv`.
 
+## Kaggle Notebook Setup
+
+Use this notebook inside Kaggle:
+
+```text
+notebooks/LG_CXR_FRCNN_Kaggle.ipynb
+```
+
+In Kaggle:
+
+1. Create or open a Kaggle Notebook.
+2. Enable GPU.
+3. Add the competition dataset from the right-side **Add input** panel.
+4. Enable internet if you want the notebook to clone the GitHub repo.
+5. Open or paste `LG_CXR_FRCNN_Kaggle.ipynb`.
+
+The notebook clones:
+
+```text
+https://github.com/thomas240103/Amia_keagle_challenge.git
+```
+
+into:
+
+```text
+/kaggle/working/Amia_keagle_challenge
+```
+
+and uses:
+
+```text
+DATA_ROOT=/kaggle/input/amia-public-challenge-2026
+WORK_DIR=/kaggle/working
+```
+
+The final submission is:
+
+```text
+/kaggle/working/submission.csv
+```
+
 ## Step-by-Step Usage
 
 Run preflight first:
@@ -474,3 +515,4 @@ Every agent working on this repository must:
 - 2026-06-02: Added `scripts/05_audit_dimensions.py` and explicit `scanner.max_size` so image resize decisions can be based on real image and box statistics.
 - 2026-06-02: Fixed original-coordinate bounding-box handling: train boxes are scaled from original scan space into PNG space for Faster R-CNN, and inference boxes are scaled back to original space for submission.
 - 2026-06-02: Added lightweight pre-push/GitHub Actions checks via `scripts/06_ci_checks.py`, `.githooks/pre-push`, and `.github/workflows/ci.yml`.
+- 2026-06-02: Added `notebooks/LG_CXR_FRCNN_Kaggle.ipynb` for running the full workflow inside Kaggle.
