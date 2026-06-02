@@ -188,6 +188,12 @@ Audit image dimensions and box scale:
 python scripts/05_audit_dimensions.py --config configs/baseline_frcnn.yaml
 ```
 
+Run lightweight repository checks:
+
+```bash
+python scripts/06_ci_checks.py
+```
+
 Train the scanner:
 
 ```bash
@@ -375,6 +381,35 @@ Reproducibility controls:
 
 Rerun from a clean environment by installing requirements, setting paths, running preflight, running smoke test, then running the full pipeline.
 
+## Push / CI Guards
+
+This repository includes lightweight checks to prevent accidental breakage before code reaches GitHub.
+
+Local pre-push hook:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+After this is enabled, `git push` runs:
+
+```bash
+python scripts/06_ci_checks.py
+```
+
+The same check also runs on GitHub Actions for pushes and pull requests to `main`.
+
+The guard checks:
+
+- Required project files exist.
+- All Python files compile.
+- Colab notebooks are valid JSON.
+- README still documents class `14` and original-to-PNG coordinate conversion.
+- No YOLO/Ultralytics imports are introduced in Python code.
+- The standalone Colab notebook embeds key project files.
+
+These checks do not train the model or import heavy ML libraries.
+
 ## Troubleshooting
 
 Dataset not found: check `data_root`, `LGCXR_DATA_ROOT`, or the notebook `DATA_ROOT`.
@@ -428,7 +463,8 @@ Every agent working on this repository must:
 15. Keep config centralized in YAML.
 16. Keep `notebooks/LG_CXR_FRCNN_Colab.ipynb` synchronized with script commands.
 17. Keep `notebooks/LG_CXR_FRCNN_Colab_Standalone.ipynb` synchronized when project files or script commands change.
-18. If a script command changes, update README, `AGENT_INSTRUCTIONS.md`, and both Colab notebooks.
+18. If a script command changes, update README, `AGENT_INSTRUCTIONS.md`, both Colab notebooks, and `scripts/06_ci_checks.py` if needed.
+19. Run `python scripts/06_ci_checks.py` before pushing.
 
 ## Changelog
 
@@ -437,3 +473,4 @@ Every agent working on this repository must:
 - 2026-06-02: Hardened dataset layout handling for explicit `train/`, `test/`, `train.csv`, `test.csv`, `img_size.csv`, and `sample_submission.csv`; training now includes folder-level negative images and preflight cross-checks CSV/image alignment.
 - 2026-06-02: Added `scripts/05_audit_dimensions.py` and explicit `scanner.max_size` so image resize decisions can be based on real image and box statistics.
 - 2026-06-02: Fixed original-coordinate bounding-box handling: train boxes are scaled from original scan space into PNG space for Faster R-CNN, and inference boxes are scaled back to original space for submission.
+- 2026-06-02: Added lightweight pre-push/GitHub Actions checks via `scripts/06_ci_checks.py`, `.githooks/pre-push`, and `.github/workflows/ci.yml`.

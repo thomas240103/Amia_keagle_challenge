@@ -1,0 +1,9 @@
+#!/bin/sh
+echo "Running LG-CXR pre-push checks..."
+python scripts/06_ci_checks.py
+status=$?
+if [ "$status" -ne 0 ]; then
+  echo "Pre-push checks failed. Push blocked."
+  exit "$status"
+fi
+echo "Pre-push checks passed."

@@ -23,6 +23,7 @@ Every agent working on this repository must:
 17. Do not over-engineer before a valid submission exists.
 18. Make every script runnable from the command line and from Colab.
 19. Keep config centralized in YAML.
+20. Run `python scripts/06_ci_checks.py` before pushing.
 
 Operational notes:
 
@@ -32,6 +33,7 @@ Operational notes:
 - Test prediction may use `test.csv`, but final submission row order must come from `sample_submission.csv`.
 - Run `scripts/05_audit_dimensions.py` before changing `scanner.image_size` or `scanner.max_size`.
 - Treat `train.csv` boxes as original scan coordinates. Use `img_size.csv` to scale targets into PNG space for training and predictions back to original space for submission.
+- Keep `.github/workflows/ci.yml`, `.githooks/pre-push`, and `scripts/06_ci_checks.py` aligned with project guardrails.
 - Detector labels: background is `0`; competition classes `0..13` map to internal labels `1..14`.
 - Class `14` is the no-finding fallback only and is ignored during detector training.
 - Empty test detections must become exactly `14 1.0 0 0 1 1`.
