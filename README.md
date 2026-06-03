@@ -237,6 +237,24 @@ The final submission is:
 /kaggle/working/submission.csv
 ```
 
+Kaggle dependency rule:
+
+Do not run this on Kaggle:
+
+```bash
+pip install -r requirements.txt
+```
+
+Kaggle already ships PyTorch, torchvision, pandas, numpy, Pillow, tqdm, and matplotlib. Installing the whole requirements file can upgrade CUDA/RAPIDS-adjacent packages and produce conflicts such as `numba-cuda`, `cuda-core`, `cudf-cu12`, or `cuml-cu12` version mismatches.
+
+The Kaggle notebooks therefore only check for optional packages and install `timm` with:
+
+```bash
+pip install --no-deps timm
+```
+
+Those pip resolver conflict messages are usually warnings, not a training failure, but avoid creating them by using the Kaggle notebook install cell.
+
 V2 uses:
 
 ```text
@@ -608,3 +626,4 @@ Every agent working on this repository must:
 - 2026-06-02: Added `notebooks/LG_CXR_FRCNN_Kaggle.ipynb` for running the full workflow inside Kaggle.
 - 2026-06-02: Added complete V2 three-model cascade config, scripts, and `notebooks/LG_CXR_FRCNN_Kaggle_V2_Three_Model.ipynb`.
 - 2026-06-02: Updated Kaggle notebooks to request torchvision pretrained detector weights and added scanner metric inspection cells before V2 continuation.
+- 2026-06-03: Made Kaggle notebook dependency installation safer by avoiding full `requirements.txt` installs and using `timm --no-deps`.
