@@ -21,6 +21,7 @@ from src.data.image_paths import build_image_index, image_ids_from_paths
 from src.data.splits import make_train_val_split
 from src.models.resnet18_classifier import build_resnet18_classifier
 from src.train.train_classifier import evaluate_multilabel_loss, train_multilabel_epoch
+from src.utils.accelerator import log_accelerator, maybe_wrap_data_parallel
 from src.utils.checkpoints import load_checkpoint, save_checkpoint
 from src.utils.config import apply_runtime_overrides, ensure_work_dir, load_config, output_path
 from src.utils.logging import configure_logger
@@ -83,7 +84,9 @@ def main() -> int:
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log_accelerator(logger, "Global classifier")
     model = build_resnet18_classifier(num_classes=14, pretrained=False).to(device)
+    model = maybe_wrap_data_parallel(model, cfg, logger, "Global classifier")
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(cfg.get("lr", 3e-4)), weight_decay=float(cfg.get("weight_decay", 1e-4)))
     amp_enabled = bool(cfg.get("amp", True) and device.type == "cuda")
     scaler = torch.cuda.amp.GradScaler(enabled=amp_enabled)

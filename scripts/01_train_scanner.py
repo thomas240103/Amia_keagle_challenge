@@ -26,6 +26,7 @@ from src.data.splits import make_train_val_split
 from src.models.fasterrcnn import build_fasterrcnn
 from src.train.train_scanner import detection_collate, evaluate_detector_map, make_optimizer, train_one_epoch
 from src.utils.checkpoints import load_checkpoint, save_checkpoint
+from src.utils.accelerator import log_accelerator
 from src.utils.config import apply_runtime_overrides, ensure_work_dir, load_config, output_path
 from src.utils.logging import configure_logger
 from src.utils.seed import set_seed
@@ -118,6 +119,7 @@ def main() -> int:
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log_accelerator(logger, "Scanner")
     logger.info("Using device: %s", device)
     model = build_fasterrcnn(
         num_classes=15,

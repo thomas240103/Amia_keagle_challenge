@@ -28,6 +28,10 @@ def fuse_three_model_scores(
 
     df = scanner_predictions.copy().reset_index(drop=True)
     df["prediction_id"] = range(len(df))
+    df = df.drop_duplicates(
+        subset=["image_id", "class_id", "confidence", "xmin", "ymin", "xmax", "ymax"],
+        keep="first",
+    ).copy()
     df["_canonical_image_id"] = df["image_id"].map(canonical_image_id)
     df["class_id"] = df["class_id"].astype(int)
     df["scanner_score"] = df["confidence"].astype(float)
@@ -36,6 +40,7 @@ def fuse_three_model_scores(
         g = global_scores.copy()
         g["_canonical_image_id"] = g["image_id"].map(canonical_image_id)
         g["class_id"] = g["class_id"].astype(int)
+        g = g.drop_duplicates(subset=["_canonical_image_id", "class_id"], keep="first")
         df = df.merge(
             g[["_canonical_image_id", "class_id", "global_score"]],
             on=["_canonical_image_id", "class_id"],
@@ -47,6 +52,7 @@ def fuse_three_model_scores(
     if crop_scores is not None and not crop_scores.empty:
         c = crop_scores.copy()
         c["prediction_id"] = c["prediction_id"].astype(int)
+        c = c.drop_duplicates(subset=["prediction_id"], keep="first")
         df = df.merge(c[["prediction_id", "crop_score"]], on="prediction_id", how="left")
     else:
         df["crop_score"] = pd.NA

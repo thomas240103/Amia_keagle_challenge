@@ -44,6 +44,13 @@ Fusion combines the available scores. If a V2 classifier checkpoint is missing, 
 
 Practical rule: do not spend GPU on V2 classifiers until the scanner is learning. In the V2 notebook, train the Faster R-CNN scanner first, inspect `best_score` / `val_map_proxy`, then continue with global and crop classifiers only if the scanner mAP proxy is not near zero.
 
+V2 accelerator rule:
+
+- Every V2 scanner/classifier script logs whether CUDA is available and how many GPUs are visible.
+- The Faster R-CNN scanner stays on one GPU by default because it is the most fragile and memory-heavy stage.
+- The global and crop ResNet18 classifier training and prediction stages use `torch.nn.DataParallel` when `multi_gpu: auto` and more than one CUDA GPU is visible.
+- Multi-GPU is used only to distribute the same classifier work across visible GPUs. The code does not automatically change image size, loss, fusion weights, thresholds, or batch size.
+
 ## Theory
 
 Object detection predicts both what is present and where it appears. Classification predicts what is present in the whole image, but not the box location. Chest X-ray pathology tasks often need detection because the leaderboard expects class IDs, confidence scores, and bounding boxes.
@@ -98,7 +105,7 @@ Detector predictions are mapped back to competition IDs `0..13` before submissio
 Kaggle defaults:
 
 ```text
-DATA_ROOT=/kaggle/input/amia-public-challenge-2026
+DATA_ROOT=/kaggle/input/competitions/amia-public-challenge-2026
 WORK_DIR=/kaggle/working
 ```
 
@@ -227,7 +234,7 @@ into:
 and uses:
 
 ```text
-DATA_ROOT=/kaggle/input/amia-public-challenge-2026
+DATA_ROOT=/kaggle/input/competitions/amia-public-challenge-2026
 WORK_DIR=/kaggle/working
 ```
 
@@ -260,6 +267,18 @@ V2 uses:
 ```text
 configs/v2_three_model.yaml
 ```
+
+The V2 config includes automatic multi-GPU use for the two classifier stages:
+
+```yaml
+global_classifier:
+  multi_gpu: auto
+
+crop_classifier:
+  multi_gpu: auto
+```
+
+On Kaggle T4 x2 this uses both GPUs for the global and crop ResNet18 classifiers. The scanner still uses `cuda:0` by default. If you want a strict one-GPU run, set both values to `false`.
 
 and writes intermediate V2 outputs:
 
@@ -474,6 +493,57 @@ Important fields:
 
 Use these before moving from V1 scanner to V2. If `val_map_proxy` stays near zero after several epochs, fix scanner training first.
 
+## V1 Baseline Result Log
+
+First full V1 Faster R-CNN run on Kaggle T4:
+
+```text
+config: configs/baseline_frcnn.yaml
+train images: 6858
+val images: 1715
+epochs: 8
+best epoch: 5
+best val_map_proxy: 0.21705999049035588
+last val_map_proxy: 0.2060268287137759
+```
+
+Epoch history:
+
+```text
+epoch 3 | train_loss 0.3229919810 | val_map_proxy 0.1854087528
+epoch 4 | train_loss 0.3056313791 | val_map_proxy 0.2145986716
+epoch 5 | train_loss 0.2920781150 | val_map_proxy 0.2170599905
+epoch 6 | train_loss 0.2778374521 | val_map_proxy 0.1997818543
+epoch 7 | train_loss 0.2631748599 | val_map_proxy 0.2060268287
+```
+
+Last epoch per-class AP:
+
+```text
+class 0:  0.2911516467
+class 1:  0.2400145116
+class 2:  0.1183019722
+class 3:  0.3788740198
+class 4:  0.1927784118
+class 5:  0.1366718399
+class 6:  0.2434662466
+class 7:  0.2106220466
+class 8:  0.1111693329
+class 9:  0.0565729158
+class 10: 0.3353316955
+class 11: 0.1793465590
+class 12: 0.1622405372
+class 13: 0.2278338662
+```
+
+Interpretation: the V1 detector is learning and is not near-zero mAP. The best checkpoint is expected at:
+
+```text
+WORK_DIR/lgcxr_scanner_fasterrcnn_best.pth
+```
+
+This result is strong enough to justify moving to V2 global/crop classifier fusion before changing scanner image size or architecture.
+
 ## Inference
 
 Inference loads the best scanner checkpoint, predicts validation and test images, applies confidence thresholding, applies class-wise NMS, maps internal labels back to original class IDs, and saves:
@@ -490,6 +560,8 @@ image_id,class_id,confidence,xmin,ymin,xmax,ymax
 ```
 
 For test inference, `test.csv` image IDs are preferred when available. Submission creation still matches predictions back to `sample_submission.csv` IDs using tolerant ID variants, so `abc123`, `abc123.png`, and path-like image IDs can still line up.
+
+`test.csv` can contain repeated image IDs. Prediction scripts deduplicate test image IDs while preserving order before running the model. Fusion and submission creation also drop exact duplicate prediction rows defensively. Without this guard, repeated test IDs can multiply identical boxes, create huge `PredictionString` values, and severely damage leaderboard score.
 
 When `img_size.csv` is available, scanner predictions are saved in original coordinate space after scaling from PNG/model image coordinates back to the original scan dimensions. This is the coordinate space expected by `submission.csv`.
 
@@ -627,3 +699,6 @@ Every agent working on this repository must:
 - 2026-06-02: Added complete V2 three-model cascade config, scripts, and `notebooks/LG_CXR_FRCNN_Kaggle_V2_Three_Model.ipynb`.
 - 2026-06-02: Updated Kaggle notebooks to request torchvision pretrained detector weights and added scanner metric inspection cells before V2 continuation.
 - 2026-06-03: Made Kaggle notebook dependency installation safer by avoiding full `requirements.txt` installs and using `timm --no-deps`.
+- 2026-06-06: Added V2 accelerator detection and automatic multi-GPU DataParallel support for the global and crop ResNet18 classifiers.
+- 2026-06-06: Recorded first full V1 Kaggle baseline metrics in the README for later report writing.
+- 2026-06-07: Fixed repeated test image ID handling by deduplicating prediction IDs and defensively dropping exact duplicate prediction rows before V2 fusion and submission.

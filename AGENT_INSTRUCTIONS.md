@@ -40,3 +40,4 @@ Operational notes:
 - Empty test detections must become exactly `14 1.0 0 0 1 1`.
 - Primary output: `/kaggle/working/submission.csv` on Kaggle, or `WORK_DIR/submission.csv` in Colab.
 - Optional global and crop classifiers must never block V1 submission.
+- V2 may use `torch.nn.DataParallel` for global/crop ResNet18 classifiers when `multi_gpu: auto` and multiple CUDA GPUs are visible; keep scanner multi-GPU changes separate and deliberate.

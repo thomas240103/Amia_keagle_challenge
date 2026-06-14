@@ -19,7 +19,7 @@ def make_train_val_split(
     smoke_max_train_images: int = 500,
     smoke_max_val_images: int = 100,
 ) -> tuple[list[str], list[str]]:
-    image_ids = [str(v) for v in all_image_ids] if all_image_ids is not None else extract_image_ids(train_df, columns.image_id)
+    image_ids = ordered_unique([str(v) for v in all_image_ids] if all_image_ids is not None else extract_image_ids(train_df, columns.image_id))
     rng = random.Random(seed)
     rng.shuffle(image_ids)
 
@@ -41,7 +41,19 @@ def make_train_val_split(
 def sample_submission_image_ids(sample_df: pd.DataFrame, smoke_test: bool = False, smoke_max_test_images: int = 100) -> list[str]:
     if "image_id" not in sample_df.columns:
         raise ValueError("Sample submission must contain image_id")
-    image_ids = [str(v) for v in sample_df["image_id"].astype(str).tolist()]
+    image_ids = ordered_unique([str(v) for v in sample_df["image_id"].astype(str).tolist()])
     if smoke_test:
         return image_ids[: int(smoke_max_test_images)]
     return image_ids
+
+
+def ordered_unique(values) -> list[str]:
+    seen = set()
+    unique = []
+    for value in values:
+        text = str(value)
+        if text in seen:
+            continue
+        seen.add(text)
+        unique.append(text)
+    return unique

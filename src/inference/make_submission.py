@@ -30,6 +30,10 @@ def make_submission(
 
     predictions = predictions.copy()
     predictions["image_id"] = predictions["image_id"].astype(str)
+    predictions = predictions.drop_duplicates(
+        subset=["image_id", "class_id", "confidence", "xmin", "ymin", "xmax", "ymax"],
+        keep="first",
+    )
     grouped = {}
     for image_id, group in predictions.groupby("image_id", sort=False):
         sorted_group = group.sort_values("confidence", ascending=False)

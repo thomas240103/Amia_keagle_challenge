@@ -19,7 +19,7 @@ from src.data.dataset import CXRImageDataset
 from src.data.discovery import discover_dataset, load_csv
 from src.data.image_paths import build_image_index, image_ids_from_paths
 from src.data.image_sizes import load_image_size_map
-from src.data.splits import make_train_val_split, sample_submission_image_ids
+from src.data.splits import make_train_val_split, ordered_unique, sample_submission_image_ids
 from src.inference.predict_scanner import image_collate, predict_dataset, save_predictions
 from src.models.fasterrcnn import build_fasterrcnn
 from src.utils.checkpoints import load_checkpoint
@@ -143,7 +143,7 @@ def _test_ids_from_metadata_or_sample(discovery, sample_df, config) -> list[str]
         test_df = load_csv(discovery.test_csv)
         try:
             image_col = infer_image_id_column(test_df)
-            test_ids = [str(v) for v in test_df[image_col].dropna().astype(str).tolist()]
+            test_ids = ordered_unique([str(v) for v in test_df[image_col].dropna().astype(str).tolist()])
             if smoke_test:
                 test_ids = test_ids[:smoke_max_test_images]
             if test_ids:

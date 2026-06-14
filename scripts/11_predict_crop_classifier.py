@@ -23,6 +23,7 @@ from src.data.image_paths import build_image_index, resolve_image_path
 from src.data.image_sizes import load_image_size_map, scale_original_boxes_to_png
 from src.models.resnet18_classifier import build_resnet18_classifier
 from src.utils.boxes import clip_boxes_to_image
+from src.utils.accelerator import log_accelerator, maybe_wrap_data_parallel
 from src.utils.checkpoints import load_checkpoint
 from src.utils.config import apply_runtime_overrides, ensure_work_dir, load_config, output_path
 from src.utils.logging import configure_logger
@@ -67,7 +68,9 @@ def main() -> int:
     loader = DataLoader(dataset, batch_size=int(cfg.get("batch_size", 32)), shuffle=False, num_workers=int(cfg.get("num_workers", 2)))
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log_accelerator(logger, "Crop classifier prediction")
     model = build_resnet18_classifier(num_classes=14, pretrained=False).to(device)
+    model = maybe_wrap_data_parallel(model, cfg, logger, "Crop classifier prediction")
     load_checkpoint(ckpt_path, model, map_location=device)
     model.eval()
 

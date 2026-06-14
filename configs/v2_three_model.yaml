@@ -1,4 +1,4 @@
-data_root: /kaggle/input/amia-public-challenge-2026
+data_root: /kaggle/input/competitions/amia-public-challenge-2026
 work_dir: /kaggle/working
 seed: 42
 
@@ -43,6 +43,7 @@ global_classifier:
   weight_decay: 0.0001
   num_workers: 2
   amp: true
+  multi_gpu: auto
   resume: true
 
 crop_classifier:
@@ -58,6 +59,7 @@ crop_classifier:
   weight_decay: 0.0001
   num_workers: 2
   amp: true
+  multi_gpu: auto
   resume: true
 
 fusion:
